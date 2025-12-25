@@ -48,7 +48,7 @@ def search_books(book_name):
                         # 0권인 경우: 텍스트만 표시
                         result_display = "없음"
                 else:
-                    result_display = "검색실패"
+                    result_display = "없음"
             else:
                 result_display = "접속불가"
         except:
