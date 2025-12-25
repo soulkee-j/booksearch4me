@@ -59,7 +59,6 @@ libraries = [
     }
 ]
 
-# 검색 함수
 def search_books(book_name):
     results = []
     progress_bar = st.progress(0)
@@ -71,28 +70,32 @@ def search_books(book_name):
         progress_bar.progress((i + 1) / total)
         
         try:
-            params = lib["params"].copy()
+            # 검색 페이지 링크 생성
             if lib["name"] == "강남구 전자도서관":
                 encoded = quote(book_name.encode('euc-kr'))
-                url = f"{lib['url']}?{lib['key_param']}={encoded}&search=title"
-                resp = requests.get(url, timeout=5)
+                search_url = f"{lib['url']}?{lib['key_param']}={encoded}&search=title"
             else:
-                params[lib["key_param"]] = book_name
-                resp = requests.get(lib["url"], params=params, timeout=5)
+                encoded = quote(book_name.encode('utf-8'))
+                search_url = f"{lib['url']}?{lib['key_param']}={encoded}&schClst=ctts%2Cautr&schDvsn=001"
+
+            resp = requests.get(search_url, timeout=5)
 
             if resp.status_code == 200:
                 tree = html.fromstring(resp.content)
                 texts = tree.xpath(lib["xpath"])
                 if texts:
-                    count = re.findall(r'\d+', texts[0].strip())
-                    val = f"{count[0]}권" if count else "0권"
-                    results.append({"도서관": lib['name'], "결과": val})
+                    count_match = re.findall(r'\d+', texts[0].strip())
+                    count = int(count_match[0]) if count_match else 0
+                    
+                    val = f"{count}권"
+                    link_str = f"[바로가기]({search_url})" if count > 0 else "-"
+                    results.append({"도서관": lib['name'], "결과": val, "링크": link_str})
                 else:
-                    results.append({"도서관": lib['name'], "결과": "없음"})
+                    results.append({"도서관": lib['name'], "결과": "없음", "링크": "-"})
             else:
-                results.append({"도서관": lib['name'], "결과": "접속불가"})
+                results.append({"도서관": lib['name'], "결과": "접속불가", "링크": "-"})
         except:
-            results.append({"도서관": lib['name'], "결과": "에러"})
+            results.append({"도서관": lib['name'], "결과": "에러", "링크": "-"})
             
     progress_bar.empty()
     status_text.empty()
@@ -108,4 +111,20 @@ if st.button("검색하기", type="primary"):
         st.warning("제목을 입력해주세요.")
     else:
         res = search_books(keyword)
-        st.table(res)
+        # 링크가 포함된 마크다운을 렌더링하기 위해 st.table 대신 st.dataframe 또는 반복문 사용
+        # 여기서는 링크를 클릭 가능하게 하기 위해 간단한 반복문(column) 방식을 사용합니다.
+        
+        st.success(f"'{keyword}' 검색 결과입니다.")
+        
+        # 헤더 출력
+        col1, col2, col3 = st.columns([2, 1, 1])
+        col1.write("**도서관 이름**")
+        col2.write("**검색 결과**")
+        col3.write("**이동**")
+        st.divider()
+
+        for item in res:
+            c1, c2, c3 = st.columns([2, 1, 1])
+            c1.write(item["도서관"])
+            c2.write(item["결과"])
+            c3.markdown(item["링크"]) # 마크다운 형식으로 링크 출력
