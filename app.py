@@ -25,7 +25,6 @@ def search_books(book_name):
     for i, lib in enumerate(libraries):
         progress_bar.progress((i + 1) / total)
         try:
-            # 검색 URL 생성
             if lib["name"] == "강남구 전자도서관":
                 encoded = quote(book_name.encode('euc-kr'))
                 search_url = f"{lib['url']}?{lib['key_param']}={encoded}&search=title"
@@ -40,15 +39,9 @@ def search_books(book_name):
                 if texts:
                     count_match = re.findall(r'\d+', texts[0].strip())
                     count = int(count_match[0]) if count_match else 0
-                    
-                    if count > 0:
-                        # 1권 이상인 경우: 결과에 하이퍼링크 적용
-                        result_display = f"[{count}권 발견]({search_url})"
-                    else:
-                        # 0권인 경우: 텍스트만 표시
-                        result_display = "없음"
+                    result_display = f"[{count}권 발견]({search_url})" if count > 0 else "없음"
                 else:
-                    result_display = "없음"
+                    result_display = "검색실패"
             else:
                 result_display = "접속불가"
         except:
@@ -61,26 +54,24 @@ def search_books(book_name):
 
 # 화면 구성
 st.title("📚 도서관 통합 검색기")
-st.write("찾으시는 책이 어느 도서관에 있는지 확인하고 바로 이동하세요.")
+st.write("책 제목을 입력하고 **엔터(Enter)**를 누르세요.")
 st.markdown("---")
 
+# [중요 변경 포인트] 
+# text_input에 값이 들어오고 엔터를 치면 'keyword' 변수에 값이 할당되면서 아래 코드가 즉시 실행됩니다.
 keyword = st.text_input("책 제목을 입력하세요", placeholder="예: 행복의 기원")
 
-if st.button("검색 시작", type="primary"):
-    if not keyword:
-        st.warning("제목을 입력해주세요.")
-    else:
-        with st.spinner('검색 중...'):
-            res = search_books(keyword)
-            
-            # 결과 출력을 위한 컬럼 설정 (비율 2:1)
-            col1, col2 = st.columns([2, 1])
-            col1.write("**도서관 이름**")
-            col2.write("**소장 현황**")
-            st.divider()
+# keyword에 값이 있을 때만 검색 실행 (엔터를 치면 실행됨)
+if keyword:
+    with st.spinner(f"'{keyword}' 검색 중..."):
+        res = search_books(keyword)
+        
+        col1, col2 = st.columns([2, 1])
+        col1.write("**도서관 이름**")
+        col2.write("**소장 현황 (클릭 시 이동)**")
+        st.divider()
 
-            for item in res:
-                c1, c2 = st.columns([2, 1])
-                c1.write(item["도서관"])
-                # 결과값에 하이퍼링크가 포함되어 있으므로 markdown으로 출력
-                c2.markdown(item["결과"])
+        for item in res:
+            c1, c2 = st.columns([2, 1])
+            c1.write(item["도서관"])
+            c2.markdown(item["결과"])
