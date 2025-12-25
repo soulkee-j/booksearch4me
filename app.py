@@ -76,7 +76,7 @@ if st.button("검색 시작", type="primary"):
             # 결과 출력을 위한 컬럼 설정 (비율 2:1)
             col1, col2 = st.columns([2, 1])
             col1.write("**도서관 이름**")
-            col2.write("**소장 현황 (클릭 시 이동)**")
+            col2.write("**소장 현황**")
             st.divider()
 
             for item in res:
