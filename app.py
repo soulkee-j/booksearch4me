@@ -52,18 +52,18 @@ def search_books(book_name):
 
 # 화면 구성
 st.title("📚 도서관 통합 검색기")
-st.write("책 제목을 입력하고 **엔터**를 누르거나 **검색** 버튼을 클릭하세요.")
+st.write("책 제목을 입력한 뒤 **엔터(Enter)**를 누르세요.")
+st.markdown("---")
 
-# [중요] 폼(Form)을 사용하면 엔터키가 자동으로 버튼 클릭으로 연결됩니다.
-with st.form(key='search_form'):
-    keyword = st.text_input("책 제목을 입력하세요", placeholder="예: 행복의 기원")
-    submit_button = st.form_submit_button(label='검색 시작')
+# 입력창 (on_change를 사용하지 않고 바로 실행되는 구조)
+keyword = st.text_input("책 제목을 입력하세요", placeholder="예: 행복의 기원", key="search_input")
 
-# 검색 버튼이 눌리거나 엔터가 입력되었을 때 실행
-if submit_button and keyword:
+# 글자가 입력된 상태에서 엔터가 쳐지면 실행됩니다.
+if keyword:
     with st.spinner(f"'{keyword}' 검색 중..."):
         res = search_books(keyword)
         
+        st.success(f"'{keyword}' 검색 결과입니다.")
         col1, col2 = st.columns([2, 1])
         col1.write("**도서관 이름**")
         col2.write("**소장 현황 (클릭 시 이동)**")
@@ -73,5 +73,3 @@ if submit_button and keyword:
             c1, c2 = st.columns([2, 1])
             c1.write(item["도서관"])
             c2.markdown(item["결과"])
-elif submit_button and not keyword:
-    st.warning("검색어를 입력해주세요.")
