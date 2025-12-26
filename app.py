@@ -7,7 +7,30 @@ from urllib.parse import quote
 # 1. 페이지 설정
 st.set_page_config(page_title="전자도서관 통합검색", page_icon="📚", layout="centered")
 
-# 2. 도서관 데이터 정의
+# 2. CSS 스타일 적용 (여백 및 제목 크기 조절)
+st.markdown("""
+    <style>
+        /* 최상단 여백 제거 */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 0rem !important;
+        }
+        /* 헤더 부분 여백 제거 */
+        header {
+            visibility: hidden;
+            height: 0px !important;
+        }
+        /* 제목 텍스트 크기 및 간격 조절 */
+        .main-title {
+            font-size: 24px !important;  /* 제목 크기 조절 (원하는 대로 변경 가능) */
+            font-weight: bold;
+            margin-bottom: 10px;
+            margin-top: -20px; /* 위로 더 밀착 */
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 3. 도서관 데이터 정의
 libraries = [
     {"name": "성남시", "url": "https://vodbook.snlib.go.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
     {"name": "경기대", "url": "https://ebook.kyonggi.ac.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
@@ -46,7 +69,6 @@ def search_libraries(book_name):
         except:
             results.append({"name": lib['name'], "link": "#", "status": "확인불가"})
 
-    # 직접 확인 도서관 추가
     encoded_utf8 = quote(book_name.encode("utf-8"))
     direct_links = [
         {"name": "서울도서관", "link": f"https://elib.seoul.go.kr/contents/search/content?t=EB&k={encoded_utf8}", "status": "링크 확인"},
@@ -57,8 +79,10 @@ def search_libraries(book_name):
     progress_bar.empty()
     return results
 
-# 4. 화면 구성
-st.title("📚 전자도서관 통합검색")
+# 화면 구성 (st.title 대신 직접 정의한 클래스 사용)
+st.markdown('<p class="main-title">📚 전자도서관 통합검색</p>', unsafe_allow_html=True)
+
+# URL 파라미터 읽기
 url_params = st.query_params
 url_keyword = url_params.get("search", "")
 
@@ -68,14 +92,13 @@ if keyword:
     with st.spinner(f"'{keyword}' 검색 중..."):
         data = search_libraries(keyword)
         
-        # HTML과 CSS를 사용하여 강제로 2열 레이아웃 유지
         html_code = f"""
         <div style="font-family: sans-serif;">
             <table style="width:100%; border-collapse: collapse; table-layout: fixed;">
                 <thead>
                     <tr style="border-bottom: 2px solid #ddd; background-color: #f8f9fa;">
-                        <th style="text-align:left; padding: 12px; width: 60%;">도서관 이름</th>
-                        <th style="text-align:right; padding: 12px; width: 40%;">소장 현황</th>
+                        <th style="text-align:left; padding: 10px; width: 60%; font-size: 14px;">도서관 이름</th>
+                        <th style="text-align:right; padding: 10px; width: 40%; font-size: 14px;">소장 현황</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -83,13 +106,5 @@ if keyword:
         for item in data:
             html_code += f"""
                 <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 12px; font-weight: bold; color: #333;">{item['name']}</td>
-                    <td style="padding: 12px; text-align: right;">
-                        <a href="{item['link']}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">{item['status']}</a>
-                    </td>
-                </tr>
-            """
-        html_code += "</tbody></table></div>"
-        
-        # iframe을 통해 HTML 출력 (Streamlit의 레이아웃 강제 변경 방지)
-        st.components.v1.html(html_code, height=len(data) * 50 + 60, scrolling=False)
+                    <td style="padding: 10px; font-weight: bold; color: #333; font-size: 15px;">{item['name']}</td>
+                    <td style="padding:
