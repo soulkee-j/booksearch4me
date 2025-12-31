@@ -86,8 +86,8 @@ def search_libraries(book_name):
                 
                 display = f"{count}권" if count > 0 else "없음"
                 results.append({"name": lib['name'], "link": search_url, "status": display})
-                except:
-                    results.append({"name": lib['name'], "link": "#", "status": "확인불가"})
+        except:
+            results.append({"name": lib['name'], "link": "#", "status": "확인불가"})
 
     # 직접 확인 도서관 추가
     encoded_utf8 = quote(book_name.encode("utf-8"))
