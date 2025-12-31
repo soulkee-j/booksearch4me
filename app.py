@@ -139,7 +139,7 @@ if keyword:
         """
         for item in data:
             if item['link'] is None:
-                html_code += """<tr style="background-color: #f1f3f5;"><td colspan="2" style="padding: 8px; text-align: center; font-size: 12px; color: #666;">기타 도서관 바로가기</td></tr>"""
+                html_code += """<tr style="background-color: #f1f3f5;"><td colspan="2" style="padding: 8px; text-align: center; font-size: 12px; color: #666;">서초구 자료 업데이트 예정일 : 2025.03.04</td></tr>"""
             else:
                 html_code += f"""
                     <tr style="border-bottom: 1px solid #eee;">
