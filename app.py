@@ -95,25 +95,53 @@ def search_libraries(book_name):
 st.markdown('<h2 style="font-size:24px; margin-top:-50px;">📚 전자도서관 통합검색</h2>', unsafe_allow_html=True)
 keyword = st.text_input("책 제목 또는 저자를 입력하세요", placeholder="예: 노인과 바다")
 
+# --- 메인 UI 출력 부분 (html_code 생성 로직) ---
+
 if keyword:
     with st.spinner(f"검색 중입니다..."):
         data = search_libraries(keyword)
         
-        # HTML/CSS 최적화 (다크모드 대응 및 "없음" 회색 처리)
+        # 시스템 테마에 맞춰 텍스트 색상이 자동 반전되는 HTML/CSS
         html_code = """
         <style>
-            .lib-table { width: 100%; border-collapse: collapse; font-family: sans-serif; color: inherit; }
-            .lib-table thead tr { background: rgba(128, 128, 128, 0.1); border-bottom: 2px solid #ddd; }
-            .lib-table th { text-align: left; padding: 12px; color: #555; }
-            .lib-table td { padding: 12px; border-bottom: 1px solid rgba(128, 128, 128, 0.2); }
-            /* 다크모드 대응: 시스템 테마 텍스트색 강제 적용 */
-            @media (prefers-color-scheme: dark) {
-                .lib-table th { color: #ccc; }
-                .lib-table td { color: #eee; }
+            body {
+                color: var(--text-color, #31333F); /* Streamlit 기본 텍스트색 상속 */
+                font-family: "Source Sans Pro", sans-serif;
+                margin: 0;
             }
-            .status-link { font-weight: bold; text-decoration: none; }
-            .status-none { color: #999 !important; font-weight: normal; } /* 없음: 회색 처리 */
-            .status-exist { color: #007bff; } /* 권수 있음: 파란색 강조 */
+            .lib-table { 
+                width: 100%; 
+                border-collapse: collapse; 
+            }
+            .lib-table tr { 
+                border-bottom: 1px solid rgba(128, 128, 128, 0.2); 
+            }
+            .lib-table th { 
+                text-align: left; 
+                padding: 12px; 
+                font-size: 0.85rem;
+                opacity: 0.6;
+            }
+            .lib-table td { 
+                padding: 14px 12px; 
+                font-size: 1rem;
+                color: inherit; 
+            }
+            /* 링크 스타일 */
+            .status-link { 
+                font-weight: bold; 
+                text-decoration: none; 
+            }
+            /* 권수가 있을 때: 강조색(파란색) */
+            .status-exist { 
+                color: #007bff; 
+            }
+            /* 권수가 없을 때: 현재 텍스트색 유지 + 흐리게 + 링크 유지 */
+            .status-none { 
+                color: inherit; 
+                opacity: 0.4; 
+                font-weight: normal;
+            }
         </style>
         <table class="lib-table">
             <thead>
@@ -123,21 +151,29 @@ if keyword:
         """
         
         for item in data:
+            # 기본적으로 모든 상태에 링크를 적용
             if item['count'] > 0:
-                status_html = f"<a href='{item['link']}' target='_blank' class='status-link status-exist'>{item['count']}권</a>"
+                status_class = "status-exist"
+                status_text = f"{item['count']}권"
             elif item['count'] == 0:
-                status_html = f"<span class='status-none'>없음</span>"
+                status_class = "status-none"
+                status_text = "없음"
             else:
-                status_html = f"<span class='status-none'>확인불가</span>"
+                status_class = "status-none"
+                status_text = "확인불가"
+            
+            # 현황이 "없음"이어도 item['link']를 사용하여 <a> 태그 유지
+            status_html = f"<a href='{item['link']}' target='_blank' class='status-link {status_class}'>{status_text}</a>"
                 
             html_code += f"""
                 <tr>
-                    <td style="font-weight:bold;">{item['name']}</td>
+                    <td style="font-weight:600;">{item['name']}</td>
                     <td style="text-align:right;">{status_html}</td>
                 </tr>
             """
         
-        st.components.v1.html(html_code + "</tbody></table>", height=len(data) * 52 + 60)
+        # 테이블 출력
+        st.components.v1.html(html_code + "</tbody></table>", height=len(data) * 55 + 60)
         
         st.markdown("---")
         st.info("📢 서초구 데이터 업데이트 예정일 : 2026.3.4")
