@@ -166,7 +166,7 @@ if keyword:
                 </tr>
             """
         
-        st.components.v1.html(html_code + "</tbody></table>", height=len(data) * 55 + 60)
+        st.components.v1.html(html_code + "</tbody></table>", height=len(data) * 55)
         
         st.markdown("---")
-        st.info("📢 서초구 데이터 업데이트 예정일 : 2026.3.4")
+        st.info("📢 서초구 데이터 업데이트 2026.3.4 예정")
