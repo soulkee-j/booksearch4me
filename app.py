@@ -24,16 +24,17 @@ def load_seocho_data():
     except:
         return None
 
-# 4. 도서관 목록 정의
+# 4. 도서관 목록 정의 (경기대 포함 총 9개 항목)
 libraries = [
-    {"name": "서울도서관", "url": "http://openapi.seoul.go.kr:8088/", "type": "seoul_api"},
+    {"name": "서울시", "url": "http://openapi.seoul.go.kr:8088/", "type": "seoul_api"},
     {"name": "서초구", "type": "seocho_csv"},
     {"name": "강남구", "url": "https://ebook.gangnam.go.kr/elibbook/book_search_result.asp", "key_param": "sarg1", "xpath": '//*[@id="container"]/div[1]/div[2]/div[1]/div/div[2]/div[1]/div[1]/div/strong/text()', "encoding": "euc-kr", "type": "gangnam"},
+    {"name": "경기대", "url": "https://ebook.kyonggi.ac.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
     {"name": "성남시", "url": "https://vodbook.snlib.go.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
     {"name": "용인시", "url": "https://ebook.yongin.go.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
     {"name": "수원시", "url": "https://ebook.suwonlib.go.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
     {"name": "고양시", "url": "https://ebook.goyanglib.or.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
-    {"name": "경기대", "url": "https://ebook.kyonggi.ac.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"}
+    {"name": "구독형", "url": "https://lib.yongin.go.kr/intro/menu/10003/program/30012/plusSearchResultList.do", "key_param": "searchKeyword", "xpath": '//*[@id="searchForm"]/div/div[2]/div[1]/div[1]/strong[2]/text()', "encoding": "utf-8", "type": "subscription"},
 ]
 
 def search_libraries(book_name):
@@ -44,7 +45,7 @@ def search_libraries(book_name):
     for i, lib in enumerate(libraries):
         progress_bar.progress((i + 1) / len(libraries))
         try:
-            # A. 서초구 CSV (캐싱 데이터 활용)
+            # A. 서초구 CSV
             if lib["type"] == "seocho_csv":
                 count = 0
                 if df_seocho is not None:
@@ -53,7 +54,7 @@ def search_libraries(book_name):
                     count = len(df_seocho[mask].drop_duplicates(subset=['도서명', '저자명', '출판사']))
                 results.append({"name": lib['name'], "link": f"https://e-book.seocholib.or.kr/search?keyword={quote(book_name)}", "status": f"{count}권" if count > 0 else "없음"})
 
-            # B. 서울도서관 API (공백 -> 언더바 변환 적용)
+            # B. 서울도서관 API (공백 -> 언더바)
             elif lib["type"] == "seoul_api":
                 if not SEOUL_API_KEY:
                     results.append({"name": lib['name'], "link": "#", "status": "키 설정 필요"})
@@ -72,17 +73,22 @@ def search_libraries(book_name):
                 count = len(unique_books)
                 results.append({"name": lib['name'], "link": f"https://elib.seoul.go.kr/contents/search/content?t=EB&k={quote(book_name)}", "status": f"{count}권" if count > 0 else "없음"})
 
-            # C. 기타 스크래핑 도서관
+            # C. 스크래핑 방식 (구독형 포함)
             else:
                 encoded_query = quote(book_name.encode(lib["encoding"]))
-                search_url = f"{lib['url']}?{lib['key_param']}={encoded_query}" if lib["type"] != "gangnam" else f"{lib['url']}?scon1=TITLE&sarg1={encoded_query}&sopr2=OR&scon2=AUTHOR&sarg2={encoded_query}"
-                if lib["type"] == "ink": search_url += "&schClst=ctts%2Cautr&schDvsn=001"
+                if lib["type"] == "subscription":
+                    search_url = f"{lib['url']}?searchType=SIMPLE&searchCategory=EBOOK2&searchKey=ALL&searchKeyword={encoded_query}"
+                elif lib["type"] == "gangnam":
+                    search_url = f"{lib['url']}?scon1=TITLE&sarg1={encoded_query}&sopr2=OR&scon2=AUTHOR&sarg2={encoded_query}"
+                else: # ink 방식 (성남, 용인소장, 수원, 고양, 경기대)
+                    search_url = f"{lib['url']}?{lib['key_param']}={encoded_query}&schClst=ctts%2Cautr&schDvsn=001"
                 
                 resp = requests.get(search_url, timeout=7)
                 tree = html.fromstring(resp.content)
                 nodes = tree.xpath(lib["xpath"])
                 count = int(re.findall(r'\d+', "".join(nodes))[0]) if nodes and re.findall(r'\d+', "".join(nodes)) else 0
                 results.append({"name": lib['name'], "link": search_url, "status": f"{count}권" if count > 0 else "없음"})
+
         except:
             results.append({"name": lib['name'], "link": "#", "status": "확인불가"})
 
@@ -94,11 +100,19 @@ st.markdown('<h2 style="font-size:24px; margin-top:-50px;">📚 전자도서관 
 keyword = st.text_input("책 제목 또는 저자를 입력하세요", placeholder="예: 노인과 바다")
 
 if keyword:
-    with st.spinner(f"'{keyword}' 검색 중..."):
+    with st.spinner(f"검색 중입니다..."):
         data = search_libraries(keyword)
+        
+        # 1. 테이블 생성
         html_code = """<div style="font-family:sans-serif;"><table style="width:100%; border-collapse:collapse;">
         <thead><tr style="background:#f8f9fa; border-bottom:2px solid #ddd;"><th style="text-align:left; padding:12px;">도서관</th><th style="text-align:right; padding:12px;">현황</th></tr></thead><tbody>"""
         for item in data:
             html_code += f"""<tr style="border-bottom:1px solid #eee;"><td style="padding:12px; font-weight:bold;">{item['name']}</td>
             <td style="padding:12px; text-align:right;"><a href="{item['link']}" target="_blank" style="color:#007bff; text-decoration:none; font-weight:bold;">{item['status']}</a></td></tr>"""
+        
+        # 2. 결과 테이블 출력
         st.components.v1.html(html_code + "</tbody></table></div>", height=len(data) * 52 + 60)
+        
+        # 3. 서초구 전용 고정 메시지 추가 (테이블 바로 밑)
+        st.markdown("---") # 구분선
+        st.caption("📢 데이터 업데이트 예정일 : 2026.3.4")
