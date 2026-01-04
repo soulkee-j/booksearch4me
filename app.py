@@ -24,6 +24,8 @@ def load_seocho_data():
     except:
         return None
 
+df_seocho_cached = load_seocho_data()
+
 # 4. 도서관 목록 정의
 libraries = [
     {"name": "성남시", "url": "https://vodbook.snlib.go.kr/elibrary-front/search/searchList.ink", "key_param": "schTxt", "xpath": '//*[@id="container"]/div/div[4]/p/strong[2]/text()', "encoding": "utf-8", "type": "ink"},
