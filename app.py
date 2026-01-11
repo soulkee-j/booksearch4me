@@ -125,7 +125,7 @@ query_params = st.query_params
 url_keyword = query_params.get("search", "")
 
 st.markdown('<h2 style="font-size:24px; margin-top:-50px;">📚 전자도서관 통합검색</h2>', unsafe_allow_html=True)
-keyword = st.text_input("책 제목 또는 저자를 입력하세요", placeholder="예: 노인과 바다")
+keyword = st.text_input("책 제목 또는 저자를 입력하세요", value=url_keyword, placeholder="예: 노인과 바다")
 
 if keyword:
     with st.spinner(f"검색 중입니다..."):
