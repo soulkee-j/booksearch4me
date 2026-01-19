@@ -2,7 +2,6 @@ name: Keep Streamlit App Awake
 
 on:
   schedule:
-    # 매일 한국 시간 09:00, 21:00 실행 (UTC 00:00, 12:00)
     - cron: '0 0,12 * * *'
   workflow_dispatch:
 
@@ -12,5 +11,6 @@ jobs:
     steps:
       - name: Reach Out to App
         run: |
-          curl -s -L https://booksearch4me.streamlit.app/ > /dev/null
-          echo "Successfully pinged the app at $(date)"
+          # -I는 헤더만 가져오고, --connect-timeout은 10초만 기다립니다.
+          # 리다이렉트 오류(47)를 피하기 위해 -L을 뺍니다.
+          curl -I --connect-timeout 10 https://booksearch4me.streamlit.app/
