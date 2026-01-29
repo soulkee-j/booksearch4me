@@ -13,4 +13,4 @@ jobs:
         run: |
           # -I는 헤더만 가져오고, --connect-timeout은 10초만 기다립니다.
           # 리다이렉트 오류(47)를 피하기 위해 -L을 뺍니다.
-          curl -I --connect-timeout 10 https://booksearch4me.streamlit.app/
+          curl -I --connect-timeout 10 https://booksearch4me.streamlit.app/?search=ping
